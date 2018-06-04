@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	 <meta name="viewport" content="width=device-width, user-scalable=no,initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+	<title>天气APP</title>
+	<link rel="stylesheet" href="css/public.css">
+	<link rel="stylesheet" href="css/weatherAPP.css">
+	<script src="js/rem.js"></script>
+	<link rel="icon" href="img/logo.ico" type="image/x-icon">
+</head>
+<body>
+	<!-- now当前信息 -->
+	<section id="now">
+		<!-- now_city当前城市 -->
+		<h1 class="now_city">
+			<span class="city_address_icon">&#xe61c;</span>
+			<span class="now_city_name">太原</span>
+		</h1>
+		<!-- 当前空气质量 -->
+		<div class="now_air">
+			<h1>空气</h1>
+			<h2></h2>
+		</div>
+		<!-- 当前温度  -->
+		<h2 class="now_temp">
+			<span></span>°
+		</h2>
+		<!-- 当前天气 -->
+		<div class="tianqi">
+			<span></span>
+		</div>
+		<!-- 当前风 -->
+		<div class="now_wind">
+			<span class="now_wind1"></span>
+			<span class="now_wind2"></span>
+		</div>
+		<!-- 温馨提示 -->
+		<div class="now_tishi">
+			<p></p>
+		</div>
+	</section>
+	<!-- 未来两天的信息 -->
+	<section id="future">
+		<div class="future_box today">
+			<div class="future_top">
+				<span class="future_date">今天</span>
+				<p><span class="today_higtemp"></span>/<span class="today_lowtemp"></span>°C</p>
+			</div>
+
+			<div class="future_top">
+				<span class="today_weather">多云</span>
+				<div class="today_img">
+					<!--<img src="img/1.png" alt="">-->
+				</div>
+			</div>
+		</div>
+		<div class="future_box tomorrow">
+			<div class="future_top">
+				<span class="future_date">明天</span>
+				<p><span class="tomorrow_higtemp"></span>/<span class="tomorrow_lowtemp"></span>°C</p>
+			</div>
+
+			<div class="future_top">
+				<span class="tomorrow_weather">多云</span>
+				<div class="tomorrow_img">
+					<!--<img src="img/1.png" alt="">-->
+				</div>
+			</div>
+		</div>
+	</section>
+	<!-- 未来24h -->
+	<ul id="hours">
+	</ul>
+	<!-- 未来一周的天气 -->
+	<ul id="weaks">
+	</ul>
+	<!-- 地区 -->
+	<main id="citys">
+		<header>
+			<input type="text" class="search" placeholder="请输入搜索地址">
+			<h2 class="citys_wenzi">取消</h2>
+		</header>
+
+		<div class="citys_hot">
+			<span class="citys_words">热门</span>
+			<div class="citys_city">
+			</div>
+		</div>
+	</main>
+
+	<script src="js/jquery-3.3.1.js"></script>
+	<script>
+		//腾讯新浪通过ip地址获取当前地理位置
+        $.getScript("https://int.dpool.sina.com.cn/iplookup/iplookup.php?format=js",function(){
+            var data=remote_ip_info;
+            var city=data.city;
+            getWeather(city);
+        });
+        function getWeather(city){
+            $(".now_city_name").html(city);
+            $.ajax({
+                url: "https://api.jisuapi.com/weather/query?appkey=a922b9b53e25f9a5&city="+city,
+                dataType: "jsonp",
+                success: function (r) {
+                    console.log(r);                       //输出之后在控制台查询想要的信息
+                    let data = r.result.daily;
+                    let data3=r.result.index;
+                    let data4=r.result.aqi;
+
+                    // 获取今天、明天两天
+                    var data0=data[0];        //今天
+                    var data1=data[1];        //明天
+                    var tishi=data3[0].detail;
+					$(".now_air h2").html(data4.quality);
+					$(".now_temp span").html(data0.day.temphigh);
+                    $(".tianqi span").html(data0.day.weather);
+                    $(".now_wind1").html(data0.day.winddirect);
+                    $(".now_wind2").html(data0.day.windpower);
+                    $(".now_tishi p").html(tishi);
+                    //设置未来两天的天气
+					$(".today_higtemp").html(data0.day.temphigh);
+					$(".today_lowtemp").html(data0.night.templow);
+                    $(".tomorrow_higtemp").html(data1.day.temphigh);
+                    $(".tomorrow_lowtemp").html(data1.night.templow);
+                    $(".today_weather").html(data0.day.weather);
+                    $(".tomorrow_weather").html(data1.day.weather);
+                    var imgs1=data0.day.img;
+                    var imgs2=data1.day.img;
+                    strImg1=`<img src="img/weathercn02/${imgs1}.png">`;
+                    strImg2=`<img src="img/weathercn02/${imgs2}.png">`;
+                    $(".today_img").html(strImg1);
+                    $(".tomorrow_img").html(strImg2);
+                    //设置未来24小时的
+                    let data2=r.result.hourly;
+					let str="";
+					$.each(data2,function (index,val) {
+						str+=`<li>
+								<h1 class="hours_time">${val.time}</h1>
+								<div class="hours_img">
+									<img src="img/weathercn02/${val.img}.png" alt="">
+								</div>
+								<h2 class="hours_temp"><span>${val.temp}</span>°</h2>
+							</li>`
+                    });
+					$("#hours").html(str);
+					//设置未来一周的天气
+					let strrr="";
+					$.each(data,function (index,val) {
+					    let date0=val.date.slice(5);
+						strrr+=`<li>
+									<h1 class="weaks_date"><span>${date0}</span></h1>
+									<h2 class="weaks_weather">${val.day.weather}</h2>
+									<div class="weaks_img">
+										<img src="img/weathercn02/${val.day.img}.png" alt="">
+									</div>
+									<h3 class="weaks_maxtemp"><span>${val.day.temphigh}</span></h3>
+									<h3 class="weaks_mintemp"><span>${val.night.templow}</span></h3>
+									<h4 class="weaks_wind"><span>${val.day.winddirect}</span></h4>
+									<h5 class="weaks_level"><span>${val.day.windpower}</span></h5>
+								</li>`
+                    });
+                    $("#weaks").html(strrr);
+                }
+            });
+        }
+        $(".now_city_name").click(function(){
+            $("#citys").show();
+            var data=[]; //存放所有数据
+            var province=[]; //存放所有省的数据
+            var city=[]; //存放某个省的所有市
+            $.ajax({
+                url:"https://api.jisuapi.com/weather/city?appkey=a922b9b53e25f9a5",
+                dataType:"jsonp",
+                success:function(r){
+                    data=r.result;
+                    province=$.grep(data,function(val,index){
+                        if(val.parentid==="0"){
+                            return true;
+                        }
+                    });
+                    let str="";
+                    $.each(province,function(index,val){
+                        str+=`<div class="province" id="${val.cityid}">${val.city}</div>`
+                    });
+                    $(".citys_city").html(str);
+                }
+            });
+            $("#citys").on("click",".province",function () {
+                var id=$(this).attr("id");
+                city=$.grep(data,function(val,index){
+                    if(val.parentid===id){
+                        return true;
+                    }
+                });
+                let str="";
+                $.each(city,function(index,val){
+                    str+=`<div class="city">${val.city}</div>`
+                });
+                $(".citys_city").html(str);
+            });
+            $("#citys").on("click",".city",function(){
+                $("#citys").hide();
+                getWeather($(this).html())
+            })
+        })
+		$(".citys_wenzi").click(function () {
+            $("#citys").hide();
+        })
+	</script>
+</body>
+</html>
